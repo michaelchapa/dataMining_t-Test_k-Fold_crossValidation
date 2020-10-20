@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from sklearn.metrics import roc_curve
 from sklearn.preprocessing import LabelEncoder
@@ -13,18 +14,28 @@ from sklearn.preprocessing import LabelEncoder
 #   I   String Array   actualClass - Symmetric Binary Class Label
 #   I   Int Array      probability - Probability of predicting (+) Class Label
 # Returns:
-#   O   ROC_curve
+#   None
 # Notes:
 #   The roc_curve() is restricted to the Binary Classification task
 def generate_ROC_curve(actualClass, probability):
     # convert from Binary Nominal to Binary Numerical
-    encodedClass = pd.get_dummies(actualClass) 
+    encodedClass = pd.get_dummies(actualClass) # generates 2 columns (N & P)
     actualClass = encodedClass['P']
-    actualClass = actualClass.to_numpy()
-    probability = probability.to_numpy()
+    actualClass = [int(value) for value in actualClass]
+    probability = [float(value) for value in probability]
     
-    fpr, tpr, thresholds = roc_curve(actualClass, probability)
+    # False-Pos Rate, True-Pos Rate
+    fpr, tpr, thresholds = roc_curve(actualClass, probability, pos_label = 1)
+    xY = np.arange(0, 1.1, .1)
     
+    plt.figure()
+    plt.xlim(0.0, 1.0)
+    plt.ylim(0.0, 1.0)
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('ROC Curve - Probabilistic classifier')
+    plt.plot(fpr, tpr, 'b-', xY, xY, 'g--')
+    plt.show()
 
 def main():
     features = ['actualClass', 'probability']
