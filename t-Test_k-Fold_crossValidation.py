@@ -85,6 +85,19 @@ def generate_ROC_curve(actualClass, probability):
     plt.legend(loc = "lower right")
     plt.show()
 
+######################### calculate_t-test ################################
+# Purpose:
+#   Does t-test on M1 and M2
+# Parameters:
+#   None
+# Returns:
+#   None
+# Notes:
+#   None
+def calculate_t-test():
+    return "TODO"
+
+
 def main():
     results = np.array([[1, 'P', .95], [2, 'N', .85], [3, 'P', .78], 
                         [4, 'P', .66], [5, 'N', .60], [6, 'P', .55], 
