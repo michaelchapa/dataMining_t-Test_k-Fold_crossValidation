@@ -1,11 +1,12 @@
+import math
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import operator as op
+import matplotlib.pyplot as plt
 
 from itertools import accumulate
-from sklearn.metrics import roc_curve, roc_auc_score
 from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import roc_curve, roc_auc_score
 
 ######################### generate_TPR_FPR ##################################
 # Purpose:
@@ -18,7 +19,7 @@ from sklearn.preprocessing import LabelEncoder
 # Returns:
 #   DataFrame
 # Notes:
-#   None
+#   TP, FP -> Inclusive up (+); TN, FN -> Exclusive down (-);
 def generate_TPR_FPR(actualClass, probability):
     encodedClass = pd.get_dummies(actualClass)
     P = encodedClass['P'].to_numpy()
@@ -85,17 +86,83 @@ def generate_ROC_curve(actualClass, probability):
     plt.legend(loc = "lower right")
     plt.show()
 
+
+######################### t_Test_pairwise ###############################
+# Purpose:
+#   Does t-test on two models trained on the same data.
+#   Uses Pairwise comparison to calculate variance.
+# Parameters:
+#   I   2-D Array   errorRates      shape(2, 10) consists of error-rates
+# Returns:
+#   None
+# Notes:
+#   T-table PDF located in project folder (or can be found in most stat books)
+#   Variance calculation is a Summation from 1 to k, where the column values
+#   are x & y.
+def t_Test_pairwise(errorRates):
+    _, k = np.shape(errorRates)
+    dof = k - 1 # degrees of freedom (dof)
+    M1 = np.mean(errorRates[0, :])
+    M2 = np.mean(errorRates[1, :])
+    
+    variance = sum([((1/ k) * (((x - y) - (M1 - M2)) ** 2)) \
+                    for x, y in errorRates.T])
+    
+    t = (M1 - M2) / math.sqrt(variance / k)
+    
+    print("Pairwise Comparison t-Test")
+    print("var: %.2lf" % (variance))
+    print("  t: %.2lf" % (t))
+    print("dof: %d" % (dof))
+    print("\nt-distribution critical value: 4.297")
+    
+    
+######################### t_Test_twoSample ##############################
+# Purpose: 
+#   Does t-test on two models trained on independent datasets.
+#   Uses Two-Sample comparison to calculate variance.
+# Parameters:
+#   I   2-D Array   errorRates      shape(2, 10) consists of error-rates
+# Returns:
+#   None
+# Notes:
+#   None
+def t_Test_twoSample(errorRates):
+    _, k = np.shape(errorRates)
+    dof = k - 1 # degrees of freedom (dof)
+    M1_mean = np.mean(errorRates[0, :])
+    M2_mean = np.mean(errorRates[1, :])
+    M1_var = np.var(errorRates[0, :])
+    M2_var = np.var(errorRates[1, :])
+
+    variance = math.sqrt((M1_var / k) + (M2_var / k))
+    t = (M1_mean - M2_mean) / math.sqrt(variance / k)
+    
+    print("\n\nTwo-Sample t-Test")
+    print("var: %.2lf" % (variance))
+    print("t: %.2lf" % (t))
+    print("dof: %d" % (dof))
+    print("\nt-distribution critical value: 4.297")
+
+
 def main():
     results = np.array([[1, 'P', .95], [2, 'N', .85], [3, 'P', .78], 
                         [4, 'P', .66], [5, 'N', .60], [6, 'P', .55], 
                         [7, 'N', .53], [8, 'N', .52], [9, 'N', .51], 
                         [10, 'P', .40]])
     
+    model_errorRates = np.array([[30.5, 32.2, 20.7, 20.6, 31.0, 
+                                 41.0, 27.7, 26.0, 21.5, 26.0], 
+                                [22.4, 14.5, 22.4, 19.6, 20.7, 
+                                 20.4, 22.1, 19.4, 16.2, 35.0]])
+    
     data = pd.DataFrame(results[:, 1:], index = results[:, 0], \
                         columns = ['actualClass', 'probability'])
     
-    generate_TPR_FPR(data['actualClass'], data['probability'])
-    generate_ROC_curve(data['actualClass'], data['probability'])
+    # generate_TPR_FPR(data['actualClass'], data['probability'])
+    # generate_ROC_curve(data['actualClass'], data['probability'])
+    # t_Test_pairwise(model_errorRates)
+    # t_Test_twoSample(model_errorRates)
     
 # Context the file is running in is __main__ 
 if __name__ == "__main__":
