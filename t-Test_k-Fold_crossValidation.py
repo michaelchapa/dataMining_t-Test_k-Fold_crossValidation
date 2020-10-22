@@ -6,7 +6,10 @@ import matplotlib.pyplot as plt
 
 from itertools import accumulate
 from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import roc_curve, roc_auc_score
+from sklearn.metrics import roc_curve, roc_auc_score, accuracy_score
+from sklearn.model_selection import RepeatedKFold
+from sklearn.naive_bayes import GaussianNB
+from sklearn.ensemble import AdaBoostClassifier
 
 ######################### generate_TPR_FPR ##################################
 # Purpose:
@@ -145,6 +148,60 @@ def t_Test_twoSample(errorRates):
     print("\nt-distribution critical value: 4.297")
 
 
+######################## k_fold_crossValidation #############################
+# Purpose:
+#   
+# Parameters:
+#   I   String      file        CSV file made of 
+#   
+# Returns:
+#   None
+# Notes:
+#   None
+def k_fold_crossValidation(file, k):
+    data = pd.read_csv(file).to_numpy()
+    X = data[:, :-1]
+    y = data[:, -1]
+
+    rkf = RepeatedKFold(n_repeats = 10, n_splits = k)
+    
+    M1 = []
+    M2 = []
+    M1_accuracies = []
+    M2_accuracies = []
+    count = 0
+    
+    for trainIndex, testIndex in rkf.split(data):
+        X_train, X_test = X[trainIndex], X[testIndex]
+        y_train, y_test = y[trainIndex], y[testIndex]
+        
+        # Naive Bayes Classifier
+        gnb = GaussianNB()
+        y_predict = gnb.fit(X_train, y_train).predict(X_test)
+        nb_accuracy = accuracy_score(y_test, y_predict)
+
+        # Adaboost Classifier
+        clf = AdaBoostClassifier(n_estimators = 100)
+        y_predict = clf.fit(X_train, y_train).predict(X_test)
+        ab_accuracy = accuracy_score(y_test, y_predict)
+        
+        M1_accuracies.append(nb_accuracy)
+        M2_accuracies.append(ab_accuracy)
+        
+        if(count == 9):
+            M1.append(np.mean(M1_accuracies))
+            M2.append(np.mean(M2_accuracies))
+            M1_accuracies = []
+            M2_accuracies = []
+            count = 0
+            
+        count += 1
+    
+    print(M1)
+    print(M2)
+
+    
+    
 def main():
     results = np.array([[1, 'P', .95], [2, 'N', .85], [3, 'P', .78], 
                         [4, 'P', .66], [5, 'N', .60], [6, 'P', .55], 
@@ -163,6 +220,7 @@ def main():
     # generate_ROC_curve(data['actualClass'], data['probability'])
     # t_Test_pairwise(model_errorRates)
     # t_Test_twoSample(model_errorRates)
+    k_fold_crossValidation("hwk07.csv", 10)
     
 # Context the file is running in is __main__ 
 if __name__ == "__main__":
